@@ -8,7 +8,10 @@ def collinear(ax, ay, bx, by, cx, cy):
     return (cx - ax) * (by - ay) == (bx - ax) * (cy - ay)
 
 from z3 import *
+set_param('parallel.enable', True)
 
+def distinct(x1, y1, x2, y2):
+        return Or(x1 != x2, y1 != y2)
 
 Px = Real('Px')
 Qx = Real('Qx')
@@ -16,9 +19,10 @@ Rx = Real('Rx')
 Py = Real('Py')
 Qy = Real('Qy')
 Ry = Real('Ry')
+s = Solver()
 
-def check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, saveable = False):
-    s = Solver()
+def check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, add_distinct = True, saveable = False):
+    
 
 
     # First that $a$, $b$, $c$ are collinear, as are $A$, $B$, $C$.
@@ -39,22 +43,25 @@ def check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, saveable = False):
     # We now add a contradiction by assuming $P$, $Q$ and $R$ are not collinear.
     s.add(Not(collinear(Px, Py, Qx, Qy, Rx, Ry)))
 
-    def distinct(x1, y1, x2, y2):
-        return Or(x1 != x2, y1 != y2)
+    def addDistinct():
+        xs = [ax, bx, cx, Ax, Bx, Cx]
+        ys = [ay, by, cy, Ay, By, Cy]
+        for i in range(0, 6):
+            for j in range(0, 6):
+                if i != j:
+                    s.add(distinct(xs[i], ys[i], xs[j], ys[j]))
 
-    xs = [ax, bx, cx, Ax, Bx, Cx]
-    ys = [ay, by, cy, Ay, By, Cy]
-    for i in range(0, 6):
-        for j in range(0, 6):
-            if i != j:
-                s.add(distinct(xs[i], ys[i], xs[j], ys[j]))
+    if add_distinct:
+        addDistinct()
+
 
     print("Added all conditions, seeking satisfyability")
     if saveable:
-        print(s.sexpr())
+        output = s.sexpr()+'(check-sat)\n'
+        print(output)
         f = open("pappus.smt2", "w")
-        f.write(s.sexpr())
-        f.write('(check-sat)\n')
+        f.write(output)
+        f.close()
     result = s.check()
     print('The conditions are: % s' % result)
     return result
@@ -76,7 +83,7 @@ def general():
     check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy)
 
 import random
-def pick_rational():
+def pick_rational(n):
         return Q(random.randint(0, n), n)
 def randomPoints(n):
     ax = pick_rational()
@@ -102,7 +109,7 @@ def good_coordinates():
     c_scale = Real('c_scale')
     bx = ax * b_scale
     cx = ax * c_scale
-    Ax = Real('Ax')
+    Ax = Int(1)
     Bx = Real('Bx')
     Cx = Real('Cx')
     ay = Real('ay')
@@ -111,8 +118,11 @@ def good_coordinates():
     Ay = Int(0)
     By = Int(0)
     Cy = Int(0)
+    s.add(Int(1) < b_scale)
+    s.add(b_scale < c_scale)
+    s.add(Int(0)< ax)
 
-    check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, True)
+    check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, False, True)
 
 good_coordinates()
 # randomPoints(100)
