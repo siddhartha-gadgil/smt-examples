@@ -9,64 +9,110 @@ def collinear(ax, ay, bx, by, cx, cy):
 
 from z3 import *
 
-ax = Real('ax')
-bx = Real('bx')
-cx = Real('cx')
-Ax = Real('Ax')
-Bx = Real('Bx')
-Cx = Real('Cx')
+
 Px = Real('Px')
 Qx = Real('Qx')
 Rx = Real('Rx')
-ay = Real('ay')
-by = Real('by')
-cy = Real('cy')
-Ay = Real('Ay')
-By = Real('By')
-Cy = Real('Cy')
 Py = Real('Py')
 Qy = Real('Qy')
 Ry = Real('Ry')
 
+def check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, saveable = False):
+    s = Solver()
 
-# We setup a solver to add conditions.
-s = Solver()
+
+    # First that $a$, $b$, $c$ are collinear, as are $A$, $B$, $C$.
+    s.add(collinear(ax, ay, bx, by, cx, cy))
+    s.add(collinear(Ax, Ay, Bx, By, Cx, Cy))
+
+    # Next, to say that $P$, $Q$ and $R$ are appropriate intersection points, we add collinearity conditions.
+    s.add(collinear(ax, ay, Px, Py, Bx, By))
+    s.add(collinear(Ax, Ay, Px, Py, bx, by))
+
+    s.add(collinear(ax, ay, Qx, Qy, Cx, Cy))
+    s.add(collinear(Ax, Ay, Qx, Qy, cx, cy))
+
+    s.add(collinear(bx, by, Rx, Ry, Cx, Cy))
+    s.add(collinear(Bx, By, Rx, Ry, cx, cy))
 
 
-# First that $a$, $b$, $c$ are collinear, as are $A$, $B$, $C$.
-s.add(collinear(ax, ay, bx, by, cx, cy))
-s.add(collinear(Ax, Ay, Bx, By, Cx, Cy))
+    # We now add a contradiction by assuming $P$, $Q$ and $R$ are not collinear.
+    s.add(Not(collinear(Px, Py, Qx, Qy, Rx, Ry)))
 
-# Next, to say that $P$, $Q$ and $R$ are appropriate intersection points, we add collinearity conditions.
-s.add(collinear(ax, ay, Px, Py, Bx, By))
-s.add(collinear(Ax, Ay, Px, Py, bx, by))
+    def distinct(x1, y1, x2, y2):
+        return Or(x1 != x2, y1 != y2)
 
-s.add(collinear(ax, ay, Qx, Qy, Cx, Cy))
-s.add(collinear(Ax, Ay, Qx, Qy, cx, cy))
+    xs = [ax, bx, cx, Ax, Bx, Cx]
+    ys = [ay, by, cy, Ay, By, Cy]
+    for i in range(0, 6):
+        for j in range(0, 6):
+            if i != j:
+                s.add(distinct(xs[i], ys[i], xs[j], ys[j]))
 
-s.add(collinear(bx, by, Rx, Ry, Cx, Cy))
-s.add(collinear(Bx, By, Rx, Ry, cx, cy))
+    print("Added all conditions, seeking satisfyability")
+    if saveable:
+        print(s.sexpr())
+        f = open("pappus.smt2", "w")
+        f.write(s.sexpr())
+        f.write('(check-sat)\n')
+    result = s.check()
+    print('The conditions are: % s' % result)
+    return result
 
-# print("Sanity check: some conditions satisfied")
-# print(s.check())
+def general():    
+    ax = Real('ax')
+    bx = Real('bx')
+    cx = Real('cx')
+    Ax = Real('Ax')
+    Bx = Real('Bx')
+    Cx = Real('Cx')
+    ay = Real('ay')
+    by = Real('by')
+    cy = Real('cy')
+    Ay = Real('Ay')
+    By = Real('By')
+    Cy = Real('Cy')
 
-# We now add a contradiction by assuming $P$, $Q$ and $R$ are not collinear.
-s.add(Not(collinear(Px, Py, Qx, Qy, Rx, Ry)))
+    check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy)
 
-def distinct(x1, y1, x2, y2):
-    return Or(x1 != x2, y1 != y2)
+import random
+def pick_rational():
+        return Q(random.randint(0, n), n)
+def randomPoints(n):
+    ax = pick_rational()
+    ay = pick_rational()
+    Ax = pick_rational()
+    Ay = pick_rational()
+    bx = pick_rational()
+    by = pick_rational()
+    Bx = pick_rational()
+    By = pick_rational()
+    cx = Real('cx')
+    cy = Real('cy')
+    Cx = Real('Cx')
+    Cy = Real('Cy')
 
-xs = [ax, bx, cx, Ax, Bx, Cx]
-ys = [ay, by, cy, Ay, By, Cy]
-for i in range(0, 6):
-    for j in range(0, 6):
-        if i != j:
-            s.add(distinct(xs[i], ys[i], xs[j], ys[j]))
+    check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy)
 
-print("Added all conditions, seeking satisfyability")
-s.smtlib2_log="filename.smt2" 
-print(s.sexpr())
-f = open("pappus.smt", "w")
-f.write(s.sexpr())
-result = s.check()
-print(result)
+# Assume that the lines intersect at the origin and one is horizontal. The latter means that y coordinates of A, B, C vanish
+# Further coordinates of b and c are determined by a scale.
+def good_coordinates():
+    ax = Real('ax')
+    b_scale = Real('b_scale')
+    c_scale = Real('c_scale')
+    bx = ax * b_scale
+    cx = ax * c_scale
+    Ax = Real('Ax')
+    Bx = Real('Bx')
+    Cx = Real('Cx')
+    ay = Real('ay')
+    by = ay * b_scale
+    cy = ay * c_scale
+    Ay = Int(0)
+    By = Int(0)
+    Cy = Int(0)
+
+    check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, True)
+
+good_coordinates()
+# randomPoints(100)
