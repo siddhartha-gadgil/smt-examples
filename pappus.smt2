@@ -15,6 +15,7 @@
 (assert (< (to_real k!1) b_scale))
 (assert (< b_scale c_scale))
 (assert (< (to_real k!0) ax))
+(assert (< (to_real k!0) ay))
 (assert (= (* (- (* ax c_scale) ax) (- (* ay b_scale) ay))
    (* (- (* ax b_scale) ax) (- (* ay c_scale) ay))))
 (assert (= (* (- Cx (to_real k!1)) (to_real (- k!0 k!0)))

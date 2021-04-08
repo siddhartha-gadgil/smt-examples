@@ -9,6 +9,7 @@ def collinear(ax, ay, bx, by, cx, cy):
 
 from z3 import *
 set_param('parallel.enable', True)
+enable_trace('Pappus: ')
 
 def distinct(x1, y1, x2, y2):
         return Or(x1 != x2, y1 != y2)
@@ -121,6 +122,7 @@ def good_coordinates():
     s.add(Int(1) < b_scale)
     s.add(b_scale < c_scale)
     s.add(Int(0)< ax)
+    s.add(Int(0)< ay)
 
     check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, False, True)
 
