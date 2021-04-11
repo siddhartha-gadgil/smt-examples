@@ -20,10 +20,16 @@ for i in range(1, n + 1):
 # solver.add(And(X[2], X[3], X[4]))
 # print(solver.sexpr())
 
+print(solver.sexpr())
+f = open("pyth"+str(n)+".smt2", "w")
+f.write('(set-logic QF_UF)\n'+solver.sexpr()+'(check-sat)\n')
+f.close()
 status = solver.check()
 values = {}
-print(status)
+print("Result:" + str(status))
 
+
+input("Press enter to see values...")
 if status == sat:
     m = solver.model()
     for i in range(2, n):

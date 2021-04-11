@@ -1,0 +1,7 @@
+(set-option :produce-proofs true)
+(set-logic AUFNIRA)
+(declare-fun y () Real)
+(declare-fun x () Real)
+(assert (not (= (* (- (- x) x) (- 0.0 y)) (* (- 0.0 x) (- (- y) y)))))
+(check-sat)
+(get-proof)

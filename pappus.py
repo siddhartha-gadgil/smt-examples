@@ -40,10 +40,6 @@ def check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, add_distinct = True, s
     s.add(collinear(bx, by, Rx, Ry, Cx, Cy))
     s.add(collinear(Bx, By, Rx, Ry, cx, cy))
 
-
-    # We now add a contradiction by assuming $P$, $Q$ and $R$ are not collinear.
-    s.add(Not(collinear(Px, Py, Qx, Qy, Rx, Ry)))
-
     def addDistinct():
         xs = [ax, bx, cx, Ax, Bx, Cx]
         ys = [ay, by, cy, Ay, By, Cy]
@@ -55,10 +51,18 @@ def check(ax, ay, bx, by, cx, cy, Ax, Ay, Bx, By, Cx, Cy, add_distinct = True, s
     if add_distinct:
         addDistinct()
 
+    print("Checking without adding contradiction")
+    # print("result without contradiction: %s" % s.check())
+
+    # We now add a contradiction by assuming $P$, $Q$ and $R$ are not collinear.
+    s.add(Not(collinear(Px, Py, Qx, Qy, Rx, Ry)))
+
+    
+
 
     print("Added all conditions, seeking satisfyability")
     if saveable:
-        output = s.sexpr()+'(check-sat)\n'
+        output = s.sexpr()+'(check-sat)'
         print(output)
         f = open("pappus.smt2", "w")
         f.write(output)
